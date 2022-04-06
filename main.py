@@ -1,4 +1,5 @@
 import re
+import nextcord
 from nextcord.ext.commands import errors
 from nextcord.ext import commands
 from nextcord import Message
@@ -62,7 +63,7 @@ async def bolb_weekly(ctx: commands.Context[commands.Bot]):
 async def on_message_bolb_add_(message: Message):
     if message.author.bot:
         return
-    if "bolb" not in message.content:
+    if "bolb" not in message.content.lower():
         return
     bolb_users = await bot.db.execute("SELECT user_id FROM bolb")
     bolb_users = await bolb_users.fetchall()
@@ -75,7 +76,10 @@ async def on_message_bolb_add_(message: Message):
 
 @bot.command("gamble")
 async def gamble_them_bolbs(ctx: commands.Context[commands.Bot], gamble_funds: int):
+    if gamble_funds < 1:
+        return await ctx.reply("You must gamble at least 1 bolb.")
 
+    gamble_funds = gamble_funds if gamble_funds % 2 == 0 else gamble_funds + 1
     bolbs_before = await bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
     bolbs_before = (await bolbs_before.fetchone())[0]
     if gamble_funds > bolbs_before:
@@ -94,6 +98,45 @@ async def gamble_them_bolbs(ctx: commands.Context[commands.Bot], gamble_funds: i
         await ctx.reply(f"You lost `{gamble_funds}` bolbs.")
         await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {gamble_funds} WHERE user_id = ?", (ctx.author.id, ))
         await bot.db.commit()
+
+@bot.command("lb", aliases=["leaderboard"])
+async def bolb_lb(ctx: commands.Context):
+    bolb_users = await bot.db.execute("SELECT user_id, bolbs FROM bolb ORDER BY bolbs")
+    bolb_users = await bolb_users.fetchall()
+    bolb_users.reverse()
+    top_10_user_ids = [i[0] for i in bolb_users[:10]]
+
+    if ctx.author.id in top_10_user_ids:
+        user_rank = top_10_user_ids.index(ctx.author.id) + 1
+        user_bolbs = [i[1] for i in bolb_users if i[0] == ctx.author.id][0]
+        description = f"You have said precisely `{user_bolbs}` bolbs and rank {user_rank}."
+    else:
+        description = "You have said no bolbs <:angery:903340317770649610>"
+
+    top_10 = [f"` - ` <@{i[0]}> - {i[1]}" for i in bolb_users[:10]]
+
+    await ctx.reply(content="<:bolbbolb:925746516101066753>",
+        embed=nextcord.Embed(description=description)
+        .set_author(name="Top bolb users", url="https://github.com/koala9712/bolb-bot", icon_url=bot.user.display_avatar.url)
+        .add_field(name="Top 10 bolbs", value="\n".join(top_10))
+        .set_thumbnail(url=bot.user.display_avatar.url)
+    )
+
+@bot.command("pay", aliases=["give"])
+async def pay_bolbs(ctx, user: nextcord.Member=None, amount:int=None):
+    if not user or not amount:
+        return await ctx.reply("You use it like this: `bolb pay <user> <amount>`")
+
+    bolbs_before = await bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
+    bolbs_before = (await bolbs_before.fetchone())[0]
+
+    if amount > bolbs_before:
+        return await ctx.reply("You don't have that many bolb's to give. Don't try to break me.")
+
+    await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {amount} WHERE user_id = ?", (ctx.author.id, ))
+    await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {amount} WHERE user_id = ?", (user.id, ))
+    await ctx.reply(f"You paid {user.mention} `{amount}` bolbs.\nYou now have {bolbs_before-amount} bolbs")
+
 
 @bot.listen("on_command_error")
 async def on_command_error_dm(ctx, error):
