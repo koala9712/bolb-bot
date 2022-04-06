@@ -1,4 +1,4 @@
-from pydoc import describe
+import re
 from nextcord.ext.commands import errors
 from nextcord.ext import commands
 from nextcord import Message
@@ -11,7 +11,7 @@ import config
 import time
 import random
 
-bot = BotBaseBot("bolb", help_command=None, owner_ids=config.owner_ids)
+bot = BotBaseBot("bolb", help_command=None, owner_ids=config.owner_ids, strip_after_prefix=True)
 bot.load_extension("jishaku")
 
 @bot.command(name="help", description="HEEEEEEEELP MEEEEEEE")
@@ -20,11 +20,14 @@ async def help_(ctx):
 
 @bot.command(name="bolb", description="Show your Bolb stats.", aliases=["bolb_amt", "bolbs"])
 async def bolb(ctx: commands.Context[commands.Bot]):
-    e = await bot.db.execute("SELECT bolb FROM bolb WHERE user_id = ?", (ctx.author.id,))
+    e = await bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
     e = await e.fetchone()
     if not e:
         await ctx.reply("You have no bolbs. Imagine")
         return
+    await ctx.reply(f"You have {e[0]} bolbs")
+    return
+
 
 @bot.command(name="daily")
 async def bolb_daily(ctx: commands.Context[commands.Bot]) -> None:
@@ -37,7 +40,7 @@ async def bolb_daily(ctx: commands.Context[commands.Bot]) -> None:
 
     await bot.db.execute("UPDATE bolb SET bolbs = bolbs + 7, daily_cd = ? WHERE user_id = ?", (time.time(), ctx.author.id))
     await bot.db.commit()
-    await ctx.reply("You have claimed your daily bolbs")
+    await ctx.reply("You claimed your daily bolbs")
     return
 
 
@@ -50,34 +53,47 @@ async def bolb_weekly(ctx: commands.Context[commands.Bot]):
         await ctx.reply("You must wait. You have already claimed your weekly.")
         return
 
-    await bot.db.execute("UPDATE bolb SET bolbs = bolbs + 50, daily_cd = ? WHERE user_id = ?", (time.time(), ctx.author.id))
+    await bot.db.execute("UPDATE bolb SET bolbs = bolbs + 45, weekly_cd = ? WHERE user_id = ?", (time.time(), ctx.author.id))
     await bot.db.commit()
-    await ctx.reply("You have claimed your weekly bolbs")
+    await ctx.reply("You claimed your weekly bolbs")
     return
 
 @bot.listen("on_message")
 async def on_message_bolb_add_(message: Message):
-    if "bolb" in message.content:
+    if message.author.bot:
+        return
+    if "bolb" not in message.content:
+        return
+    bolb_users = await bot.db.execute("SELECT user_id FROM bolb")
+    bolb_users = await bolb_users.fetchall()
+    if message.author.id in [i[0] for i in bolb_users]:
         await bot.db.execute("UPDATE bolb SET bolbs = bolbs + 1 WHERE user_id = ?", (message.author.id,))
+    else:
+        await bot.db.execute("INSERT INTO bolb (user_id, bolbs, daily_cd, weekly_cd) VALUES(?, ?, ?, ?)", (message.author.id, 1, 0, 0))
+
+    await bot.db.commit()
 
 @bot.command("gamble")
-async def gamble_them_bolbs(ctx: commands.Context[commands.Bot], gamble_funds):
-    gamble_odds = [0, 1]
+async def gamble_them_bolbs(ctx: commands.Context[commands.Bot], gamble_funds: int):
+
     bolbs_before = await bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
-    bolbs_before = await bolbs_before.fetchone()[0]
+    bolbs_before = (await bolbs_before.fetchone())[0]
     if gamble_funds > bolbs_before:
         return await ctx.reply("You don't have that many bolb's to gamble. Don't try to break me.")
 
-    le_ods = random.randchoice(gamble_odds)
+    le_ods = random.choices((0, 1), (65, 35)) # 65% chance to win, 35% chance to lose.
+    le_ods = le_ods[0]
 
     if le_ods == 0:
         le_pay = random.randint(gamble_funds/2, gamble_funds*2)
         await ctx.reply(f"You won `{le_pay}` bolbs.") # it's random - the payout of gamble, no less than 50% and more than 200%
-        await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {le_pay} WHERE user_id = ?", (ctx.author.id))
+        await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {le_pay} WHERE user_id = ?", (ctx.author.id, ))
+        await bot.db.commit()
     elif le_ods == 1:
-        le_pay = random.randint(gamble_funds/2, gamble_funds)
-        await ctx.reply(f"You lost `{le_pay}` bolbs.")
-        await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {le_pay} WHERE user_id = ?", (ctx.author.id))
+        # you lose your entire bet if you lose
+        await ctx.reply(f"You lost `{gamble_funds}` bolbs.")
+        await bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {gamble_funds} WHERE user_id = ?", (ctx.author.id, ))
+        await bot.db.commit()
 
 @bot.listen("on_command_error")
 async def on_command_error_dm(ctx, error):
@@ -85,10 +101,14 @@ async def on_command_error_dm(ctx, error):
         return
     if isinstance(error, commands.CommandInvokeError):
         error = error.original
+    if isinstance(error, errors.MissingRequiredArgument):
+        return await ctx.reply("You are missing a required argument.")
+    if isinstance(error, commands.ArgumentParsingError):
+        return await ctx.reply("I ran into an error parsing your argument.")
     await ctx.reply(f"I ran into an error, I'll tell <@736147895039819797> and <@756258832526868541> to fix it.\n{error}")
 
 async def startup():
-    bot.db = aiosqlite.connect("bolb.db")
+    bot.db = await aiosqlite.connect("bolb.db")
 
 bot.loop.create_task(startup())
 bot.run(config.token)

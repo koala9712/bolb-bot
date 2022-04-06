@@ -1,6 +1,8 @@
 import aiosqlite
 import asyncio
 
+from main import bolb
+
 async def execute(statement: str, args=None):
     db = await aiosqlite.connect("bolb.db")
     await db.execute(statement, args if args else ())
@@ -20,4 +22,11 @@ async def select():
     print(y)
     print(type(y))
 
-asyncio.run(select())
+async def bolb_users():
+    db = await aiosqlite.connect("bolb.db")
+    bolb_users = await db.execute("SELECT user_id FROM bolb")
+    bolb_users = await bolb_users.fetchall()
+    print(bolb_users)
+
+
+asyncio.run(bolb_users())
