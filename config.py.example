@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 token: str = ""
+=======
+token: str = ""
+>>>>>>> b2a680a (fix: added things into cogs)
 owner_ids: list[int] = [1, 2]
