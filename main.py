@@ -76,10 +76,10 @@ async def on_message_bolb_add_(message: Message):
 
 @bot.command("gamble")
 async def gamble_them_bolbs(ctx: commands.Context[commands.Bot], gamble_funds: int):
-    if gamble_funds < 1:
-        return await ctx.reply("You must gamble at least 1 bolb.")
+    if gamble_funds < 2:
+        return await ctx.reply("You must gamble at least 2 bolbs.")
 
-    gamble_funds = gamble_funds if gamble_funds % 2 == 0 else gamble_funds + 1
+    gamble_funds = gamble_funds if gamble_funds % 2 == 0 else gamble_funds - 1
     bolbs_before = await bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
     bolbs_before = (await bolbs_before.fetchone())[0]
     if gamble_funds > bolbs_before:
