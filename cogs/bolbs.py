@@ -5,13 +5,9 @@ from nextcord.ext import commands
 from nextcord import Member, Embed
 from BotBase import BotBaseBot
 
-class Commands(commands.Cog):
+class Blolb(commands.Cog):
     def __init__(self, bot: BotBaseBot):
       self.bot = bot
-
-    @commands.command(name="help", description="HEEEEEEEELP MEEEEEEE")
-    async def help_(self, ctx: commands.Context[commands.Bot]):
-        await ctx.reply("nO")
 
     @commands.command(name="bolb", description="Show your Bolb stats.", aliases=["bolb_amt", "bolbs"])
     async def bolb(self, ctx: commands.Context[commands.Bot]):
@@ -113,4 +109,4 @@ class Commands(commands.Cog):
             await self.bot.db.commit()
 
 def setup(bot: BotBaseBot):
-    bot.add_cog(Commands(bot))
+    bot.add_cog(Blolb(bot))

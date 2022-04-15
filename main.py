@@ -1,10 +1,15 @@
-import os
 import aiosqlite
 import config
 from BotBase import BotBaseBot
+from nextcord.ext import commands
+
 
 bot = BotBaseBot()
 cogs = ["cogs.bolbs", "cogs.events", "jishaku"]
+
+@bot.command(name="help", description="HEEEEEEEELP MEEEEEEE")
+async def help_(ctx: commands.Context[commands.Bot]):
+    await ctx.reply("nO")
 
 
 async def startup():
