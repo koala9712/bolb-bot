@@ -31,7 +31,13 @@ class Events(commands.Cog):
             return await ctx.reply("You are missing a required argument.")
         if isinstance(error, commands.ArgumentParsingError):
             return await ctx.reply("I ran into an error parsing your argument.")
-        await ctx.reply(f"I ran into an error, I'll tell <@736147895039819797> and <@756258832526868541> to fix it.\n{error}")
+
+        await ctx.reply(f"I ran into an error, I'll tell the developers to fix it.\n{error}")
+        try:
+            await self.bot.get_user(756258832526868541).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
+            await self.bot.get_user(736147895039819797).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
+        except:
+            pass
 
     @commands.Cog.listener("on_ready")
     async def on_turn_on(self):

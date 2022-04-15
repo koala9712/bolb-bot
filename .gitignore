@@ -1,12 +1,4 @@
-<<<<<<< HEAD
 bolb.db
 __pycache__/
 config.py
 .venv
-=======
-bolb.db
-__pycache__/
-config.py
-.venv
-cogs/__pycache__/
->>>>>>> b2a680a (fix: added things into cogs)
