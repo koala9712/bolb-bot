@@ -36,7 +36,7 @@ class Commands(commands.Cog):
         await self.bot.db.commit()
         await ctx.reply("You claimed your daily bolbs")
         return
-    
+
     @commands.command(name="weekly", description="Claim your weekly bolbs", aliases=["weeklyclaim"])
     async def bolb_weekly(self, ctx: commands.Context[commands.Bot]):
         weekly_cd_cursor: aiosqlite.Cursor = await self.bot.db.execute("SELECT weekly_cd FROM bolb WHERE user_id = ?", (ctx.author.id,))
@@ -91,20 +91,18 @@ class Commands(commands.Cog):
 
     @commands.command(name="gamble", description="Gamble your bolbs, win or lose", aliases=["gamble_bolbs"])
     async def gamble_them_bolbs(self, ctx: commands.Context[commands.Bot], gamble_funds: int):
-        if gamble_funds < 2:
-            return await ctx.reply("You must gamble at least 2 bolbs.")
 
-        gamble_funds = gamble_funds if gamble_funds % 2 == 0 else gamble_funds - 1
+
         bolbs_before = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
         bolbs_before = (await bolbs_before.fetchone())[0]
         if gamble_funds > bolbs_before:
             return await ctx.reply("You don't have that many bolb's to gamble. Don't try to break me.")
 
-        le_ods = random.choices((0, 1), (65, 35)) # 65% chance to win, 35% chance to lose.
+        le_ods = random.choices((0, 1), (35, 65)) # 65% chance to win, 35% chance to lose.
         le_ods = le_ods[0]
 
         if le_ods == 0:
-            le_pay = random.randint(gamble_funds/2, gamble_funds*2)
+            le_pay = random.randint(gamble_funds if gamble_funds % 2 == 0 else gamble_funds-1/2, gamble_funds*2)
             await ctx.reply(f"You won `{le_pay}` bolbs.") # it's random - the payout of gamble, no less than 50% and more than 200%
             await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {le_pay} WHERE user_id = ?", (ctx.author.id, ))
             await self.bot.db.commit()

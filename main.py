@@ -4,17 +4,21 @@ import config
 from BotBase import BotBaseBot
 
 bot = BotBaseBot()
-bot.load_extension("jishaku")
+cogs = ["cogs.bolbs", "cogs.events", "jishaku"]
 
-for fn in os.listdir("cogs"):
-    if fn.endswith(".py"):
-        try:
-            bot.load_extension(f"cogs.{fn[:-3]}")
-            print(f"{fn} Cog loaded!")
-        except Exception as err:
-            print(f"There was an error with {fn}: {err}")
 
 async def startup():
+    # cogs
+    for extension in cogs:
+        try:
+            bot.load_extension(extension)
+            print(f"Successfully loaded extension {extension}")
+        except Exception as e:
+            exc = f"{type(e).__name__,}: {e}"
+            print(f"Failed to load extension {extension}\n{exc}")
+    print("Loaded all cogs...")
+
+    # db
     bot.db = await aiosqlite.connect("bolb.db")
     await bot.db.execute("CREATE TABLE IF NOT EXISTS bolb (user_id INTEGER PRIMARY KEY, bolbs INTEGER, daily_cd INTEGER, weekly_cd INTEGER)")
     await bot.db.commit()
