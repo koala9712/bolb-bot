@@ -1,8 +1,6 @@
 import aiosqlite
 import asyncio
 
-from main import bolb
-
 async def execute(statement: str, args=None):
     db = await aiosqlite.connect("bolb.db")
     await db.execute(statement, args if args else ())
