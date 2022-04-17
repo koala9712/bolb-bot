@@ -1,6 +1,10 @@
 from nextcord.ext import commands
 from BotBase import BotBaseBot
 from nextcord import Message
+from nextcord.ext.commands import errors
+import nextcord
+import traceback
+
 
 class Events(commands.Cog):
     def __init__(self, bot: BotBaseBot):
@@ -22,22 +26,37 @@ class Events(commands.Cog):
         await self.bot.db.commit()
 
     @commands.Cog.listener("on_command_error")
-    async def on_command_error_dm(self, ctx: commands.Context, error: commands.CommandError):
-        if isinstance(error, commands.errors.CommandNotFound):
+    async def on_command_error_dm(self, ctx, error):
+        if isinstance(error, errors.CommandNotFound):
             return
         if isinstance(error, commands.CommandInvokeError):
             error = error.original
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            return await ctx.reply("You are missing a required argument.")
-        if isinstance(error, commands.ArgumentParsingError):
-            return await ctx.reply("I ran into an error parsing your argument.")
 
-        await ctx.reply(f"I ran into an error, I'll tell the developers to fix it.\n{error}")
-        try:
-            await self.bot.get_user(756258832526868541).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
-            await self.bot.get_user(736147895039819797).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
-        except:
-            pass
+        elif isinstance(error, errors.TooManyArguments):
+            await ctx.send("You are giving too many arguments!")
+            return
+        elif isinstance(error, errors.BadArgument):
+            await ctx.send(
+                "The library ran into an error attempting to parse your argument."
+            )
+            return
+        elif isinstance(error, errors.MissingRequiredArgument):
+            await ctx.send("You're missing a required argument.")
+
+        elif isinstance(error, nextcord.NotFound) and "Unknown interaction" in str(error):
+            return
+
+        else:
+            await ctx.send(
+                f"This command raised an exception: `{type(error)}:{str(error)}`"
+            )
+
+        deliminator = "\n"
+        if not self.bot.owners:
+            self.bot.owners = [self.bot.get_user(i) for i in self.bot.owner_ids]
+        await self.bot.owner.send(
+            f"{type(error).__name__}: {ctx.message.jump_url} while using command {ctx.invoked_with}\n```py\n{deliminator.join(traceback.format_exception(type(error), error, error.__traceback__))}```"
+        )
 
     @commands.Cog.listener("on_ready")
     async def on_turn_on(self):
