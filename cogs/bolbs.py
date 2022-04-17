@@ -78,12 +78,14 @@ class Blolb(commands.Cog):
 
         top_10 = [f"` - ` <@{i[0]}> - {i[1]}" for i in bolb_users[:10]]
 
-        await ctx.reply(content="<:bolbbolb:925746516101066753>",
-            embed=Embed(description=description)
+        await ctx.reply(embed=Embed(
+            description=description,
+            colour=0x00ffea,
+            )
             .set_author(name="Top bolb users", url="https://github.com/koala9712/bolb-bot", icon_url=self.bot.user.display_avatar.url)
             .add_field(name="Top 10 bolbs", value="\n".join(top_10))
             .set_thumbnail(url=self.bot.user.display_avatar.url)
-    )
+    )   
 
     @commands.command(name="gamble", description="Gamble your bolbs, win or lose", aliases=["gamble_bolbs"])
     async def gamble_them_bolbs(self, ctx: commands.Context[commands.Bot], gamble_funds: int):
