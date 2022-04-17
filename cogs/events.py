@@ -34,8 +34,10 @@ class Events(commands.Cog):
 
         await ctx.reply(f"I ran into an error, I'll tell the developers to fix it.\n{error}")
         try:
-            await self.bot.get_user(756258832526868541).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
-            await self.bot.get_user(736147895039819797).send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
+            sham = await self.bot.fetch_user(756258832526868541)
+            koala = await self.bot.fetch_user(736147895039819797)
+            await sham.send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
+            await koala.send(f"{ctx.author.mention} ran into an error({ctx.message.jump_url}), please fix it.\n{error}")
         except:
             pass
 
