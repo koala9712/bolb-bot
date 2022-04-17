@@ -28,5 +28,9 @@ async def startup():
     await bot.db.execute("CREATE TABLE IF NOT EXISTS bolb (user_id INTEGER PRIMARY KEY, bolbs INTEGER, daily_cd INTEGER, weekly_cd INTEGER)")
     await bot.db.commit()
 
+    # bot vars
+
+    bot.owners = [bot.get_user(i) for i in config.owner_ids]
+
 bot.loop.create_task(startup())
 bot.run(config.token)

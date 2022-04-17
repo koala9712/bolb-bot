@@ -14,5 +14,6 @@ class BotBaseBot(commands.Bot):
             activity=Activity(
                 name="99 bottles of bolb on the wall",
                 type=ActivityType.watching
-            )
+            ),
+            case_insensitive=True
         )
