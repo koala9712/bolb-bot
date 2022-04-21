@@ -1,3 +1,4 @@
+from contextvars import copy_context
 import random
 import time
 import aiosqlite
@@ -52,12 +53,16 @@ class Blolb(commands.Cog):
         if not user or not amount:
             return await ctx.reply("You use it like this: `bolb pay <user> <amount>`")
 
+        if amount > 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368:
+            return await ctx.reply("Don't try to break me smh.")
+
         bolbs_before = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
         bolbs_before = (await bolbs_before.fetchone())[0]
 
         if amount > bolbs_before:
             return await ctx.reply("You don't have that many bolb's to give. Don't try to break me.")
-
+        if amount > 1:
+            return await ctx.reply("Don't try to break me smh.")
         await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {amount} WHERE user_id = ?", (ctx.author.id, ))
         await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {amount} WHERE user_id = ?", (user.id, ))
         await ctx.reply(f"You paid {user.mention} `{amount}` bolbs.\nYou now have {bolbs_before-amount} bolbs")
@@ -77,6 +82,9 @@ class Blolb(commands.Cog):
             description = "You have said no bolbs <:angery:903340317770649610>"
 
         top_10 = [f"` - ` <@{i[0]}> - {i[1]}" for i in bolb_users[:10]]
+        for i in top_10:
+            if "397745647723216898" in i:
+                i.replace(("- ")[-1], "inf 🐛")
 
         await ctx.reply(embed=Embed(
             description=description,
@@ -90,6 +98,8 @@ class Blolb(commands.Cog):
     @commands.command(name="gamble", description="Gamble your bolbs, win or lose", aliases=["gamble_bolbs"])
     async def gamble_them_bolbs(self, ctx: commands.Context[commands.Bot], gamble_funds: int):
 
+        if gamble_funds > 1_000_000_000_000_000:
+            return await ctx.reply("Do something useful with your bolbs, stop gambling them.")
 
         bolbs_before = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
         bolbs_before = (await bolbs_before.fetchone())[0]
@@ -100,11 +110,16 @@ class Blolb(commands.Cog):
         le_ods = le_ods[0]
 
         if le_ods == 0:
+            if gamble_funds < 1:
+                return await ctx.reply("Imagine trying to break me smh")
+
             le_pay = random.randint(gamble_funds if gamble_funds % 2 == 0 else gamble_funds-1/2, gamble_funds*2)
             await ctx.reply(f"You won `{le_pay}` bolbs.") # it's random - the payout of gamble, no less than 50% and more than 200%
             await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {le_pay} WHERE user_id = ?", (ctx.author.id, ))
             await self.bot.db.commit()
         elif le_ods == 1:
+            if gamble_funds < 1:
+                return await ctx.reply("Imagine trying to break me smh")
             # you lose your entire bet if you lose
             await ctx.reply(f"You lost `{gamble_funds}` bolbs.")
             await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {gamble_funds} WHERE user_id = ?", (ctx.author.id, ))

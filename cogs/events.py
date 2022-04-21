@@ -52,11 +52,10 @@ class Events(commands.Cog):
             )
 
         deliminator = "\n"
-        if not self.bot.owners:
-            self.bot.owners = [self.bot.get_user(i) for i in self.bot.owner_ids]
-        await self.bot.owner.send(
-            f"{type(error).__name__}: {ctx.message.jump_url} while using command {ctx.invoked_with}\n```py\n{deliminator.join(traceback.format_exception(type(error), error, error.__traceback__))}```"
-        )
+        message = f"{type(error).__name__}: {ctx.message.jump_url} while using command {ctx.invoked_with}\n```py\n{deliminator.join(traceback.format_exception(type(error), error, error.__traceback__))}```"
+        for user_id in self.bot.owner_ids:
+            user = self.bot.get_user(user_id)
+            await user.send(message)
 
     @commands.Cog.listener("on_ready")
     async def on_turn_on(self):
