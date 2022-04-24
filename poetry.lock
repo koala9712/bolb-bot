@@ -179,6 +179,18 @@ speed = ["orjson (>=3.5.4)", "aiodns (>=1.1)", "brotli", "cchardet"]
 voice = ["PyNaCl (>=1.3.0,<1.5)"]
 
 [[package]]
+name = "ooliver-botbase"
+version = "1.12.4"
+description = "A personal nextcord bot base package for bots."
+category = "main"
+optional = false
+python-versions = ">=3.8,<4.0"
+
+[package.dependencies]
+asyncpg = ">=0.25.0"
+nextcord = ">=2.0.0-alpha.10"
+
+[[package]]
 name = "pathspec"
 version = "0.9.0"
 description = "Utility library for gitignore style pattern matching of file paths."
@@ -229,7 +241,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "ddcdf8777a8d6e22dd2cd3fd9b35d0a6e563abcd14f4f347dfce55828d2f35b3"
+content-hash = "bf238a6f66cfd195b958dc19e4be5d45821ebac02b82a00a8271b3a314cbb75f"
 
 [metadata.files]
 aiohttp = [
@@ -519,6 +531,10 @@ mypy-extensions = [
 ]
 nextcord = [
     {file = "nextcord-2.0.0a10.tar.gz", hash = "sha256:5126ac396748df07df7c32c2d4dadf060d29f794c35762609228e19b85a58cdf"},
+]
+ooliver-botbase = [
+    {file = "ooliver-botbase-1.12.4.tar.gz", hash = "sha256:ce892d1ac210c8cebc02b7ab570bed6f348dd960b035a28964287f7359ae867f"},
+    {file = "ooliver_botbase-1.12.4-py3-none-any.whl", hash = "sha256:db1ea266ee6b98938b9a33f6ba6e57cd6ccf828152e6757860dfe6ab3e62e601"},
 ]
 pathspec = [
     {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},

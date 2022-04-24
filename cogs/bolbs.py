@@ -1,129 +1,188 @@
-from contextvars import copy_context
-import random
-import time
-import aiosqlite
-from nextcord.ext import commands
-from nextcord import Member, Embed
-from BotBase import BotBaseBot
+from __future__ import annotations
 
-class Blolb(commands.Cog):
-    def __init__(self, bot: BotBaseBot):
-      self.bot = bot
+from datetime import timedelta
+from typing import TYPE_CHECKING
+from random import choices, randint
 
-    @commands.command(name="bolb", description="Show your Bolb stats.", aliases=["bolb_amt", "bolbs"])
-    async def bolb(self, ctx: commands.Context[commands.Bot]):
-        e = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
-        e = await e.fetchone()
-        if not e:
+from nextcord import Embed, Member
+from nextcord.ext.commands import Cog, Context, command
+from nextcord.utils import utcnow, format_dt
+
+if TYPE_CHECKING:
+    from ..main import MyBot
+
+    Context = Context[MyBot]
+
+
+class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
+    def __init__(self, bot: MyBot):
+        self.bot = bot
+
+    @command(description="Show your Bolb stats.", aliases=["bolb_amt", "bolbs"])
+    async def bolb(self, ctx: Context):
+        amount = await self.bot.db.fetchval(
+            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
+        )
+
+        if not amount:
             await ctx.reply("You have no bolbs. Imagine")
-            return
-        await ctx.reply(f"You have {e[0]} bolbs")
-        return
+        else:
+            await ctx.reply(f"You have {amount} bolbs")
 
-    @commands.command(name="daily", description="Claim your daily bolbs", aliases=["dailyclaim"])
-    async def bolb_daily(self, ctx: commands.Context[commands.Bot]) -> None:
-        daily_cd_cursor: aiosqlite.Cursor = await self.bot.db.execute("SELECT daily_cd FROM bolb WHERE user_id = ?", (ctx.author.id, ))
-        daily_cd: int = (await daily_cd_cursor.fetchone())[0]
+    @command(description="Claim your daily bolbs", aliases=["dailyclaim"])
+    async def daily(self, ctx: Context):
+        daily = await self.bot.db.fetchval(
+            "SELECT daily FROM bolb WHERE id=$1", ctx.author.id
+        )
 
-        if daily_cd + 60*60*24 > time.time():
-            await ctx.reply("You must wait. You have already claimed your daily")
-            return
+        next_day = daily + timedelta(days=1)
 
-        await self.bot.db.execute("UPDATE bolb SET bolbs = bolbs + 7, daily_cd = ? WHERE user_id = ?", (time.time(), ctx.author.id))
-        await self.bot.db.commit()
+        if next_day > utcnow():
+            return await ctx.reply(
+                f"You must wait {format_dt(daily, style='R')}. "
+                "You have already claimed your daily"
+            )
+
+        await self.bot.db.execute(
+            "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily_cd=$1 WHERE id=$2",
+            utcnow(),
+            ctx.author.id,
+        )
+
         await ctx.reply("You claimed your daily bolbs")
-        return
 
-    @commands.command(name="weekly", description="Claim your weekly bolbs", aliases=["weeklyclaim"])
-    async def bolb_weekly(self, ctx: commands.Context[commands.Bot]):
-        weekly_cd_cursor: aiosqlite.Cursor = await self.bot.db.execute("SELECT weekly_cd FROM bolb WHERE user_id = ?", (ctx.author.id,))
-        weekly_cd: int = (await weekly_cd_cursor.fetchone())[0]
+    @command(description="Claim your weekly bolbs", aliases=["weeklyclaim"])
+    async def weekly(self, ctx: Context):
+        weekly = await self.bot.db.fetchval(
+            "SELECT weekly FROM bolb WHERE id=$1", ctx.author.id
+        )
 
-        if weekly_cd + 60*60*24*7 > time.time():
-            await ctx.reply("You must wait. You have already claimed your weekly.")
+        next_week = weekly + timedelta(weeks=1)
+
+        if next_week > utcnow():
+            await ctx.reply(
+                f"You must wait until {format_dt(weekly, style='R')}. "
+                "You have already claimed your weekly."
+            )
             return
 
-        await self.bot.db.execute("UPDATE bolb SET bolbs = bolbs + 45, weekly_cd = ? WHERE user_id = ?", (time.time(), ctx.author.id))
-        await self.bot.db.commit()
+        await self.bot.db.execute(
+            "UPDATE bolb SET bolbs = bolb.bolbs + 45 weekly = $1 WHERE id=$2",
+            utcnow(),
+            ctx.author.id,
+        )
+
         await ctx.reply("You claimed your weekly bolbs")
-        return
 
-    @commands.command(name="pay", description="Give someone some of your bolbs", aliases=["give"])
-    async def pay_bolbs(self, ctx: commands.Context[commands.Bot], user: Member=None, amount:int=None):
-        if not user or not amount:
-            return await ctx.reply("You use it like this: `bolb pay <user> <amount>`")
-
-        if amount > 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368:
-            return await ctx.reply("Don't try to break me smh.")
-
-        bolbs_before = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
-        bolbs_before = (await bolbs_before.fetchone())[0]
+    @command(description="Give someone some of your bolbs", aliases=["give"])
+    async def pay(self, ctx: Context, user: Member, amount: int):
+        bolbs_before = await self.bot.db.fetchval(
+            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
+        )
 
         if amount > bolbs_before:
-            return await ctx.reply("You don't have that many bolb's to give. Don't try to break me.")
-        if amount > 1:
+            return await ctx.reply(
+                "You don't have that many bolb's to give. Don't try to break me."
+            )
+
+        if amount < 1:
             return await ctx.reply("Don't try to break me smh.")
-        await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {amount} WHERE user_id = ?", (ctx.author.id, ))
-        await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {amount} WHERE user_id = ?", (user.id, ))
-        await ctx.reply(f"You paid {user.mention} `{amount}` bolbs.\nYou now have {bolbs_before-amount} bolbs")
 
-    @commands.command(name="lb", description="See who has the most bolbs", aliases=["leaderboard"])
-    async def bolb_lb(self, ctx: commands.Context[commands.Bot]):
-        bolb_users = await self.bot.db.execute("SELECT user_id, bolbs FROM bolb ORDER BY bolbs")
-        bolb_users = await bolb_users.fetchall()
-        bolb_users.reverse()
-        top_10_user_ids = [i[0] for i in bolb_users[:10]]
+        await self.bot.db.execute(
+            f"UPDATE bolb SET bolbs = bolb.bolbs - {amount} WHERE id=$1", ctx.author.id
+        )
+        await self.bot.db.execute(
+            f"UPDATE bolb SET bolbs = bolb.bolbs + {amount} WHERE id=$1", user.id
+        )
+        await ctx.reply(
+            f"You paid {user.mention} `{amount}` bolbs.\n"
+            f"You now have `{bolbs_before - amount}` bolbs"
+        )
 
-        if ctx.author.id in top_10_user_ids:
-            user_rank = top_10_user_ids.index(ctx.author.id) + 1
-            user_bolbs = [i[1] for i in bolb_users if i[0] == ctx.author.id][0]
-            description = f"You have said precisely `{user_bolbs}` bolbs and rank {user_rank}."
+    @command(description="See who has the most bolbs", aliases=["leaderboard"])
+    async def lb(self, ctx: Context):
+        assert self.bot.user is not None
+
+        users = await self.bot.db.fetch(
+            "SELECT id, bolbs FROM bolb ORDER BY bolbs LIMIT 10"
+        )
+
+        users.reverse()
+        user_ids = [row.get("id") for row in users]
+
+        if ctx.author.id in user_ids:
+            user_rank = user_ids.index(ctx.author.id) + 1
+            user_bolbs = next(
+                row.get("bolb") for row in users if row.get("id") == ctx.author.id
+            )
+
+            description = (
+                f"You have said precisely `{user_bolbs}` bolbs and rank {user_rank}."
+            )
         else:
             description = "You have said no bolbs <:angery:903340317770649610>"
 
-        top_10 = [f"` - ` <@{i[0]}> - {i[1]}" for i in bolb_users[:10]]
+        top_10 = [f"` - ` <@{row.get('id')}> - {row.get('bolbs')}" for row in users]
         for i in top_10:
             if "397745647723216898" in i:
                 i.replace(("- ")[-1], "inf 🐛")
 
-        await ctx.reply(embed=Embed(
-            description=description,
-            colour=0x00ffea,
+        await ctx.reply(
+            embed=Embed(
+                description=description,
+                colour=self.bot.color,
             )
-            .set_author(name="Top bolb users", url="https://github.com/koala9712/bolb-bot", icon_url=self.bot.user.display_avatar.url)
+            .set_author(
+                name="Top bolb users",
+                url="https://github.com/koala9712/bolb-bot",
+                icon_url=self.bot.user.display_avatar.url,
+            )
             .add_field(name="Top 10 bolbs", value="\n".join(top_10))
             .set_thumbnail(url=self.bot.user.display_avatar.url)
-    )   
+        )
 
-    @commands.command(name="gamble", description="Gamble your bolbs, win or lose", aliases=["gamble_bolbs"])
-    async def gamble_them_bolbs(self, ctx: commands.Context[commands.Bot], gamble_funds: int):
+    @command(description="Gamble your bolbs, win or lose", aliases=["gamble_bolbs"])
+    async def gamble(self, ctx: Context, funds: int):
+        if funds > 1_000_000_000_000_000:
+            return await ctx.reply(
+                "Do something useful with your bolbs, stop gambling them."
+            )
 
-        if gamble_funds > 1_000_000_000_000_000:
-            return await ctx.reply("Do something useful with your bolbs, stop gambling them.")
+        if funds < 1:
+            return await ctx.reply("Imagine trying to break me smh")
 
-        bolbs_before = await self.bot.db.execute("SELECT bolbs FROM bolb WHERE user_id = ?", (ctx.author.id,))
-        bolbs_before = (await bolbs_before.fetchone())[0]
-        if gamble_funds > bolbs_before:
-            return await ctx.reply("You don't have that many bolb's to gamble. Don't try to break me.")
+        before = await self.bot.db.fetchval(
+            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
+        )
 
-        le_ods = random.choices((0, 1), (35, 65)) # 65% chance to win, 35% chance to lose.
-        le_ods = le_ods[0]
+        if funds > before:
+            return await ctx.reply(
+                "You don't have that many bolb's to gamble. Don't try to break me."
+            )
 
-        if le_ods == 0:
-            if gamble_funds < 1:
-                return await ctx.reply("Imagine trying to break me smh")
+        le_ods = choices((0, 1), (35, 65))  # 65% chance to win, 35% chance to lose.
+        odds = le_ods[0]
 
-            le_pay = random.randint(gamble_funds if gamble_funds % 2 == 0 else gamble_funds-1/2, gamble_funds*2)
-            await ctx.reply(f"You won `{le_pay}` bolbs.") # it's random - the payout of gamble, no less than 50% and more than 200%
-            await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs + {le_pay} WHERE user_id = ?", (ctx.author.id, ))
-            await self.bot.db.commit()
+        if odds == 0:
+            pay = randint(funds // 2, funds * 2)
+            await ctx.reply(
+                f"You won `{pay}` bolbs."
+            )  # it's random - the payout of gamble, no less than 50% and more than 200%
+
+            await self.bot.db.execute(
+                "UPDATE bolb SET bolbs = bolbs + $1 WHERE user_id=$2",
+                pay,
+                ctx.author.id,
+            )
         elif le_ods == 1:
-            if gamble_funds < 1:
-                return await ctx.reply("Imagine trying to break me smh")
             # you lose your entire bet if you lose
-            await ctx.reply(f"You lost `{gamble_funds}` bolbs.")
-            await self.bot.db.execute(f"UPDATE bolb SET bolbs = bolbs - {gamble_funds} WHERE user_id = ?", (ctx.author.id, ))
-            await self.bot.db.commit()
+            await ctx.reply(f"You lost `{funds}` bolbs.")
+            await self.bot.db.execute(
+                "UPDATE bolb SET bolbs = bolbs - $1 WHERE user_id=$2",
+                funds,
+                ctx.author.id,
+            )
 
-def setup(bot: BotBaseBot):
-    bot.add_cog(Blolb(bot))
+
+def setup(bot: MyBot):
+    bot.add_cog(Bolb(bot))

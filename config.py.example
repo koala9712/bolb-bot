@@ -1,2 +1,0 @@
-token: str = ""
-owner_ids: list[int] = [1, 2]

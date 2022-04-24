@@ -1,35 +1,28 @@
-import aiosqlite
-import config
-from BotBase import BotBaseBot
-from nextcord.ext import commands
+from os import listdir, getenv
+from os.path import isfile
+
+from nextcord import Intents
+from botbase import BotBase
 
 
-bot = BotBaseBot()
-cogs = ["cogs.bolbs", "cogs.events", "jishaku"]
-
-@bot.command(name="help", description="HEEEEEEEELP MEEEEEEE")
-async def help_(ctx: commands.Context[commands.Bot]):
-    await ctx.reply("nO")
+intents = Intents.none()
+intents.guilds = True
+intents.messages = True
 
 
-async def startup():
-    # cogs
-    for extension in cogs:
-        try:
-            bot.load_extension(extension)
-            print(f"Successfully loaded extension {extension}")
-        except Exception as e:
-            exc = f"{type(e).__name__,}: {e}"
-            print(f"Failed to load extension {extension}\n{exc}")
-    print("Loaded all cogs...")
+class MyBot(BotBase):
+    ...
 
-    # db
-    bot.db = await aiosqlite.connect("bolb.db")
-    await bot.db.execute("CREATE TABLE IF NOT EXISTS bolb (user_id INTEGER PRIMARY KEY, bolbs INTEGER, daily_cd INTEGER, weekly_cd INTEGER)")
-    await bot.db.commit()
 
-    # bot vars
-    bot.owners = [bot.get_user(i) for i in config.owner_ids]
+bot = MyBot(intents=intents)
 
-bot.loop.create_task(startup())
-bot.run(config.token)
+
+if __name__ == "__main__":
+    for filename in listdir("./cogs"):
+        if filename.endswith(".py"):
+            bot.load_extension(f"cogs.{filename[:-3]}")
+        else:
+            if isfile(filename):
+                print(f"Unable to load {filename[:-3]}")
+
+    bot.run(getenv("TOKEN"))
