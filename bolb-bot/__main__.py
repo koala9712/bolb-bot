@@ -3,6 +3,10 @@ from os.path import isfile
 
 from nextcord import Intents
 from botbase import BotBase
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 intents = Intents.none()
@@ -14,13 +18,13 @@ class MyBot(BotBase):
     ...
 
 
-bot = MyBot(intents=intents)
+bot = MyBot(intents=intents, config_module="bolb-bot.config")
 
 
 if __name__ == "__main__":
-    for filename in listdir("./cogs"):
+    for filename in listdir("bolb-bot/cogs"):
         if filename.endswith(".py"):
-            bot.load_extension(f"cogs.{filename[:-3]}")
+            bot.load_extension(f"bolb-bot.cogs.{filename[:-3]}")
         else:
             if isfile(filename):
                 print(f"Unable to load {filename[:-3]}")
