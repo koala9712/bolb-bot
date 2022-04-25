@@ -18,7 +18,7 @@ from nextcord import Embed
 if TYPE_CHECKING:
     from nextcord import Message
 
-    from ..main import MyBot
+    from ..__main__ import MyBot
 
     Context = Context[MyBot]
 

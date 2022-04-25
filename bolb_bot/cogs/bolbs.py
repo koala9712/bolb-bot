@@ -9,7 +9,7 @@ from nextcord.ext.commands import Cog, Context, command
 from nextcord.utils import utcnow, format_dt
 
 if TYPE_CHECKING:
-    from ..main import MyBot
+    from ..__main__ import MyBot
 
     Context = Context[MyBot]
 

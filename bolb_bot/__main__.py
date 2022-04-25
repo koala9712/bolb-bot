@@ -15,9 +15,7 @@ intents.messages = True
 
 
 class MyBot(BotBase):
-    async def startup(self, *args, **kwargs):
-        print("i ran")
-        await super().startup(*args, **kwargs)
+    ...
 
 
 bot = MyBot(intents=intents, config_module="bolb_bot.config")
