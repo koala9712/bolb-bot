@@ -15,7 +15,9 @@ intents.messages = True
 
 
 class MyBot(BotBase):
-    ...
+    async def startup(self, *args, **kwargs):
+        print("i ran")
+        await super().startup(*args, **kwargs)
 
 
 bot = MyBot(intents=intents, config_module="bolb_bot.config")
@@ -29,5 +31,4 @@ if __name__ == "__main__":
             if isfile(filename):
                 print(f"Unable to load {filename[:-3]}")
 
-    bot.loop.create_task(bot.startup())
     bot.run(getenv("TOKEN"))

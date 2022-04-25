@@ -10,3 +10,4 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./logs:/bot/logs
+    network_mode: host
