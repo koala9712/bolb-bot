@@ -1,4 +1,4 @@
 *
 !poetry.lock
 !pyproject.toml
-!bolb-bot/*
+!bolb_bot/*
