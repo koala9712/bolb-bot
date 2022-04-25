@@ -38,10 +38,6 @@ class Events(Cog):
         if "bolb" not in message.content.lower():
             return
 
-        record = await self.bot.db.execute(
-            "SELECT user_id FROM bolb WHERE id=$1", message.author.id
-        )
-
         await self.bot.db.execute(
             """
             INSERT INTO bolb 
