@@ -1,10 +1,9 @@
-from os import listdir, getenv
+from os import getenv, listdir
 from os.path import isfile
 
-from nextcord import Intents
 from botbase import BotBase
 from dotenv import load_dotenv
-
+from nextcord import Intents
 
 load_dotenv()
 

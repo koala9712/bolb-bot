@@ -44,7 +44,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             )
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily_cd=$1 WHERE id=$2",
+            "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily=$1 WHERE id=$2",
             utcnow(),
             ctx.author.id,
         )
