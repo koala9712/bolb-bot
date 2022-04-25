@@ -8,6 +8,6 @@ m = zip(low, up)
 
 
 db_name = "bolb"
-color = 0x00FFEA
+colors = [0x00FFEA]
 prefix = set("".join(m) for m in product(*m))
 helpindex = "bolb."
