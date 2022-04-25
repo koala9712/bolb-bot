@@ -11,4 +11,4 @@ RUN poetry install --no-root --no-dev
 COPY . .
 
 ENTRYPOINT ["poetry", "run", "python3"]
-CMD ["-m", "bolb-bot"]
+CMD ["-m", "bolb_bot"]
