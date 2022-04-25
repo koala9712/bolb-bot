@@ -29,4 +29,5 @@ if __name__ == "__main__":
             if isfile(filename):
                 print(f"Unable to load {filename[:-3]}")
 
+    bot.loop.create_task(bot.startup())
     bot.run(getenv("TOKEN"))
