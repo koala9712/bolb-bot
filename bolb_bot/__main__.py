@@ -1,9 +1,15 @@
-from os import getenv, listdir
-from os.path import isfile
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from os import getenv
 
 from botbase import BotBase
 from dotenv import load_dotenv
 from nextcord import Intents
+from aiosqlite import connect
+
+if TYPE_CHECKING:
+    from aiosqlite import Connection
 
 load_dotenv()
 
@@ -14,18 +20,26 @@ intents.messages = True
 
 
 class MyBot(BotBase):
-    ...
+    db: Connection
+
+    async def startup(self, *args, **kwargs):
+        self.db = await connect("db/bolb.db")
+
+        await self.db.execute(
+            """CREATE TABLE IF NOT EXISTS bolb (
+                id INTEGER PRIMARY KEY,
+                bolbs INTEGER,
+                daily INTEGER,
+                weekly INTEGER
+            )"""
+        )
+        await self.db.commit()
+
+        await super().startup(*args, **kwargs)
 
 
-bot = MyBot(intents=intents, config_module="bolb_bot.config")
+bot = MyBot(intents=intents)
 
 
 if __name__ == "__main__":
-    for filename in listdir("bolb_bot/cogs"):
-        if filename.endswith(".py"):
-            bot.load_extension(f"bolb_bot.cogs.{filename[:-3]}")
-        else:
-            if isfile(filename):
-                print(f"Unable to load {filename[:-3]}")
-
     bot.run(getenv("TOKEN"))

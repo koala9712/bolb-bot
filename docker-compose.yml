@@ -10,4 +10,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./logs:/bot/logs
-    network_mode: host
+      - sqlite:/bot/db
+
+volumes:
+  sqlite:

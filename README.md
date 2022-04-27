@@ -8,24 +8,7 @@ written by [koala#9712](https://github.com/koala9712), [Sham#0002](https://githu
 ## Deploying
 
 ```bash
-git clone https://github.com/koala9712/bolb-bot
-cd bolb-bot
+git clone https://github.com/koala9712/bolb-bot && cd bolb-bot
 echo "TOKEN=yourbottoken" > .env
 docker-compose up --build -d
-```
-
-### Db schema
-
-```bash
-poetry/pip install ooliver-botbase
-botbase <db-url>
-psql mydb
-> CREATE TABLE bolb (
-    id BIGINT PRIMARY KEY,
-    bolbs INT,
-    daily TIMESTAMPTZ,
-    weekly TIMESTAMPTZ
-);
-CREATE TABLE
-# TODO: script for that
 ```

@@ -39,15 +39,11 @@ class Events(Cog):
             return
 
         await self.bot.db.execute(
-            """
-            INSERT INTO bolb 
-            VALUES ($1, $2, $3, $4) 
+            """INSERT INTO bolb 
+            VALUES (?, ?, ?, ?) 
             ON CONFLICT (id) DO UPDATE
                 SET bolbs = bolb.bolbs + 1""",
-            message.author.id,
-            1,
-            utcnow(),
-            utcnow(),
+            (message.author.id, 1, utcnow(), utcnow()),
         )
 
     @Cog.listener()

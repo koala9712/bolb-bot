@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import timedelta
-from typing import TYPE_CHECKING
+from datetime import datetime, timedelta
 from random import choices, randint
+from typing import TYPE_CHECKING
 
 from nextcord import Embed, Member
 from nextcord.ext.commands import Cog, Context, command
-from nextcord.utils import utcnow, format_dt
+from nextcord.utils import format_dt, utcnow
 
 if TYPE_CHECKING:
     from ..__main__ import MyBot
@@ -20,9 +20,11 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
 
     @command(description="Show your Bolb stats.", aliases=["bolb_amt", "bolbs"])
     async def bolb(self, ctx: Context):
-        amount = await self.bot.db.fetchval(
-            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
-        )
+        async with self.bot.db.execute(
+            "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
+        ) as c:
+            row = await c.fetchone()
+            amount = row[0] if row else None
 
         if not amount:
             await ctx.reply("You have no bolbs. Imagine")
@@ -31,9 +33,12 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
 
     @command(description="Claim your daily bolbs", aliases=["dailyclaim"])
     async def daily(self, ctx: Context):
-        daily = await self.bot.db.fetchval(
+        async with self.bot.db.execute(
             "SELECT daily FROM bolb WHERE id=$1", ctx.author.id
-        )
+        ) as c:
+            row = await c.fetchone()
+            daily_raw = row[0] if row else 0
+            daily = datetime.fromtimestamp(daily_raw)
 
         next_day = daily + timedelta(days=1)
 
@@ -44,18 +49,21 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             )
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily=$1 WHERE id=$2",
-            utcnow(),
-            ctx.author.id,
+            "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily=? WHERE id=?",
+            (utcnow(), ctx.author.id),
         )
+        await self.bot.db.commit()
 
         await ctx.reply("You claimed your daily bolbs")
 
     @command(description="Claim your weekly bolbs", aliases=["weeklyclaim"])
     async def weekly(self, ctx: Context):
-        weekly = await self.bot.db.fetchval(
+        async with self.bot.db.execute(
             "SELECT weekly FROM bolb WHERE id=$1", ctx.author.id
-        )
+        ) as c:
+            row = await c.fetchone()
+            weekly_raw = row[0] if row else 0
+            weekly = datetime.fromtimestamp(weekly_raw)
 
         next_week = weekly + timedelta(weeks=1)
 
@@ -67,18 +75,20 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             return
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 45 weekly = $1 WHERE id=$2",
-            utcnow(),
-            ctx.author.id,
+            "UPDATE bolb SET bolbs = bolb.bolbs + 45 weekly = ? WHERE id=?",
+            (utcnow(), ctx.author.id),
         )
+        await self.bot.db.commit()
 
         await ctx.reply("You claimed your weekly bolbs")
 
     @command(description="Give someone some of your bolbs", aliases=["give"])
     async def pay(self, ctx: Context, user: Member, amount: int):
-        bolbs_before = await self.bot.db.fetchval(
-            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
-        )
+        async with self.bot.db.execute(
+            "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
+        ) as c:
+            row = await c.fetchone()
+            bolbs_before = row[0] if row else 0
 
         if amount > bolbs_before:
             return await ctx.reply(
@@ -89,11 +99,12 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             return await ctx.reply("Don't try to break me smh.")
 
         await self.bot.db.execute(
-            f"UPDATE bolb SET bolbs = bolb.bolbs - {amount} WHERE id=$1", ctx.author.id
+            "UPDATE bolb SET bolbs = bolb.bolbs - ? WHERE id=?", (amount, ctx.author.id)
         )
         await self.bot.db.execute(
-            f"UPDATE bolb SET bolbs = bolb.bolbs + {amount} WHERE id=$1", user.id
+            "UPDATE bolb SET bolbs = bolb.bolbs + ? WHERE id=?", (amount, user.id)
         )
+        await self.bot.db.commit()
         await ctx.reply(
             f"You paid {user.mention} `{amount}` bolbs.\n"
             f"You now have `{bolbs_before - amount}` bolbs"
@@ -103,18 +114,18 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
     async def lb(self, ctx: Context):
         assert self.bot.user is not None
 
-        users = await self.bot.db.fetch(
-            "SELECT id, bolbs FROM bolb ORDER BY bolbs LIMIT 10"
+        users = list(
+            await self.bot.db.execute_fetchall(
+                "SELECT id, bolbs FROM bolb ORDER BY bolbs LIMIT 10"
+            )
         )
 
         users.reverse()
-        user_ids = [row.get("id") for row in users]
+        user_ids = [row[0] for row in users]
 
         if ctx.author.id in user_ids:
             user_rank = user_ids.index(ctx.author.id) + 1
-            user_bolbs = next(
-                row.get("bolb") for row in users if row.get("id") == ctx.author.id
-            )
+            user_bolbs = next(row[1] for row in users if row[0] == ctx.author.id)
 
             description = (
                 f"You have said precisely `{user_bolbs}` bolbs and rank {user_rank}."
@@ -122,7 +133,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
         else:
             description = "You have said no bolbs <:angery:903340317770649610>"
 
-        top_10 = [f"` - ` <@{row.get('id')}> - {row.get('bolbs')}" for row in users]
+        top_10 = [f"` - ` <@{row[0]}> - {row[1]}" for row in users]
         for i in top_10:
             if "397745647723216898" in i:
                 i.replace(("- ")[-1], "inf 🐛")
@@ -151,9 +162,11 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
         if funds < 1:
             return await ctx.reply("Imagine trying to break me smh")
 
-        before = await self.bot.db.fetchval(
-            "SELECT bolbs FROM bolb WHERE id=$1", ctx.author.id
-        )
+        async with self.bot.db.execute(
+            "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
+        ) as c:
+            row = await c.fetchone()
+            before = row[0] if row else 0
 
         if funds > before:
             return await ctx.reply(
@@ -170,18 +183,16 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             )  # it's random - the payout of gamble, no less than 50% and more than 200%
 
             await self.bot.db.execute(
-                "UPDATE bolb SET bolbs = bolbs + $1 WHERE user_id=$2",
-                pay,
-                ctx.author.id,
+                "UPDATE bolb SET bolbs = bolbs + ? WHERE id=?", (pay, ctx.author.id)
             )
         elif le_ods == 1:
             # you lose your entire bet if you lose
             await ctx.reply(f"You lost `{funds}` bolbs.")
             await self.bot.db.execute(
-                "UPDATE bolb SET bolbs = bolbs - $1 WHERE user_id=$2",
-                funds,
-                ctx.author.id,
+                "UPDATE bolb SET bolbs = bolbs - ? WHERE id=?", (funds, ctx.author.id)
             )
+
+        await self.bot.db.commit()
 
 
 def setup(bot: MyBot):

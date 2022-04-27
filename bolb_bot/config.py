@@ -7,7 +7,7 @@ up = low.upper()
 m = zip(low, up)
 
 
-db_name = "bolb"
+db_enabled = False
 colors = [0x00FFEA]
 prefix = set("".join(m) for m in product(*m))
 helpindex = "bolb."
