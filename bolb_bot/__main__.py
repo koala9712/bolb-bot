@@ -38,7 +38,9 @@ class MyBot(BotBase):
         await super().startup(*args, **kwargs)
 
 
-bot = MyBot(intents=intents)
+ids = getenv("OWNER_IDS")
+assert ids is not None
+bot = MyBot(intents=intents, owner_ids=[int(i) for i in ids.strip("[]").split(", ")])
 
 
 if __name__ == "__main__":

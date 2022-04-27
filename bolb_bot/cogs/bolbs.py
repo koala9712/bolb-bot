@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from random import choices, randint
 from typing import TYPE_CHECKING
 
@@ -34,11 +34,11 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
     @command(description="Claim your daily bolbs", aliases=["dailyclaim"])
     async def daily(self, ctx: Context):
         async with self.bot.db.execute(
-            "SELECT daily FROM bolb WHERE id=$1", ctx.author.id
+            "SELECT daily FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
             daily_raw = row[0] if row else 0
-            daily = datetime.fromtimestamp(daily_raw)
+            daily = datetime.fromtimestamp(daily_raw, tz=timezone.utc)
 
         next_day = daily + timedelta(days=1)
 
@@ -59,11 +59,11 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
     @command(description="Claim your weekly bolbs", aliases=["weeklyclaim"])
     async def weekly(self, ctx: Context):
         async with self.bot.db.execute(
-            "SELECT weekly FROM bolb WHERE id=$1", ctx.author.id
+            "SELECT weekly FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
             weekly_raw = row[0] if row else 0
-            weekly = datetime.fromtimestamp(weekly_raw)
+            weekly = datetime.fromtimestamp(weekly_raw, tz=timezone.utc)
 
         next_week = weekly + timedelta(weeks=1)
 

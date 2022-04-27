@@ -13,7 +13,7 @@ from nextcord.ext.commands import (
     TooManyArguments,
 )
 from nextcord.utils import utcnow
-from nextcord import Embed
+from nextcord import Embed, NotFound, Forbidden
 
 if TYPE_CHECKING:
     from nextcord import Message
@@ -45,6 +45,7 @@ class Events(Cog):
                 SET bolbs = bolb.bolbs + 1""",
             (message.author.id, 1, utcnow(), utcnow()),
         )
+        await self.bot.db.commit()
 
     @Cog.listener()
     async def on_command_error(self, ctx: Context, error: Exception):
@@ -74,11 +75,6 @@ class Events(Cog):
                 guild = ctx.guild.name
 
             tb = "\n".join(format_exception(type(error), error, error.__traceback__))
-            await painchannel.send_embed(  # type: ignore
-                desc=f"command {ctx.command} gave ```py\n{tb}```, "
-                f"invoke: {ctx.message.content} in "
-                f"{channel} ({name}) in {guild} by {ctx.author}"
-            )
             log.error(
                 "Command %s raised %s: %s",
                 ctx.command,
@@ -86,14 +82,22 @@ class Events(Cog):
                 error,
                 exc_info=True,
             )
+            await ctx.send(self.bot.owner_ids)
 
             for user_id in self.bot.owner_ids:
-                user = self.bot.get_user(user_id)
-
-                if not user:
+                try:
+                    user = await self.bot.fetch_user(user_id)
+                except NotFound:
                     continue
 
-                await user.send(embed=embed)
+                try:
+                    await self.bot.get_wrapped_person(user).send_embed(
+                        desc=f"command {ctx.command} gave ```py\n{tb}```, "
+                        f"invoke: {ctx.message.content} in "
+                        f"{channel} ({name}) in {guild} by {ctx.author}"
+                    )
+                except Forbidden:
+                    log.error("%s has dms closed smh", str(user))
 
     @Cog.listener()
     async def on_ready(self):
