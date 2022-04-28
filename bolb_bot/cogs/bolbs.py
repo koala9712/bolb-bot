@@ -174,7 +174,6 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             )
 
         le_ods = choices((0, 1), (35, 65))  # 65% chance to win, 35% chance to lose.
-        await ctx.send(le_ods)
         odds = le_ods[0]
 
         if odds == 0:
@@ -186,7 +185,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             await self.bot.db.execute(
                 "UPDATE bolb SET bolbs = bolbs + ? WHERE id=?", (pay, ctx.author.id)
             )
-        elif le_ods == 1:
+        elif odds == 1:
             # you lose your entire bet if you lose
             await ctx.reply(f"You lost `{funds}` bolbs.")
             await self.bot.db.execute(
