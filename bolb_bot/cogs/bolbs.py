@@ -37,8 +37,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT daily FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            daily_raw = row[0] if row and row[0] else 0
-            daily = datetime.fromtimestamp(float(daily_raw), tz=timezone.utc)
+            daily = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
 
         next_day = daily + timedelta(days=1)
 
@@ -62,8 +61,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT weekly FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            weekly_raw = row[0] if row and row[0] else 0
-            weekly = datetime.fromtimestamp(float(weekly_raw), tz=timezone.utc)
+            weekly = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
 
         next_week = weekly + timedelta(weeks=1)
 
@@ -75,7 +73,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             return
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 45, weekly = ? WHERE id=?",
+            "UPDATE bolb SET bolbs = bolb.bolbs + 45, weekly=? WHERE id=?",
             (utcnow().timestamp(), ctx.author.id),
         )
         await self.bot.db.commit()
