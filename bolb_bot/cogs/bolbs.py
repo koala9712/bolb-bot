@@ -44,7 +44,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
 
         if next_day > utcnow():
             return await ctx.reply(
-                f"You must wait {format_dt(daily, style='R')}. "
+                f"You must wait {format_dt(next_day, style='R')}. "
                 "You have already claimed your daily"
             )
 
@@ -69,7 +69,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
 
         if next_week > utcnow():
             await ctx.reply(
-                f"You must wait until {format_dt(weekly, style='R')}. "
+                f"You must wait until {format_dt(next_week, style='R')}. "
                 "You have already claimed your weekly."
             )
             return
