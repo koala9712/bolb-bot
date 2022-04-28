@@ -75,7 +75,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             return
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 45 weekly = ? WHERE id=?",
+            "UPDATE bolb SET bolbs = bolb.bolbs + 45, weekly = ? WHERE id=?",
             (utcnow().timestamp(), ctx.author.id),
         )
         await self.bot.db.commit()
