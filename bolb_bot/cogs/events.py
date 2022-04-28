@@ -82,7 +82,6 @@ class Events(Cog):
                 error,
                 exc_info=True,
             )
-            await ctx.send(self.bot.owner_ids)
 
             for user_id in self.bot.owner_ids:
                 try:
