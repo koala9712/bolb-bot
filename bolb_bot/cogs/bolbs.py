@@ -38,7 +38,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
         ) as c:
             row = await c.fetchone()
             daily_raw = row[0] if row else 0
-            daily = datetime.fromtimestamp(daily_raw, tz=timezone.utc)
+            daily = datetime.fromtimestamp(float(daily_raw), tz=timezone.utc)
 
         next_day = daily + timedelta(days=1)
 
@@ -63,7 +63,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
         ) as c:
             row = await c.fetchone()
             weekly_raw = row[0] if row else 0
-            weekly = datetime.fromtimestamp(weekly_raw, tz=timezone.utc)
+            weekly = datetime.fromtimestamp(float(weekly_raw), tz=timezone.utc)
 
         next_week = weekly + timedelta(weeks=1)
 
