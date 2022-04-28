@@ -174,7 +174,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             )
 
         le_ods = choices((0, 1), (35, 65))  # 65% chance to win, 35% chance to lose.
-        await ctx.send(le_ds)
+        await ctx.send(le_ods)
         odds = le_ods[0]
 
         if odds == 0:
