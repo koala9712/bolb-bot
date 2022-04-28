@@ -24,7 +24,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            amount = row[0] if row else None
+            amount = row[0] if row and row[0] else None
 
         if not amount:
             await ctx.reply("You have no bolbs. Imagine")
@@ -37,7 +37,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT daily FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            daily_raw = row[0] if row else 0
+            daily_raw = row[0] if row and row[0] else 0
             daily = datetime.fromtimestamp(float(daily_raw), tz=timezone.utc)
 
         next_day = daily + timedelta(days=1)
@@ -62,7 +62,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT weekly FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            weekly_raw = row[0] if row else 0
+            weekly_raw = row[0] if row and row[0] else 0
             weekly = datetime.fromtimestamp(float(weekly_raw), tz=timezone.utc)
 
         next_week = weekly + timedelta(weeks=1)
@@ -88,7 +88,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            bolbs_before = row[0] if row else 0
+            bolbs_before = row[0] if row and row[0] else 0
 
         if amount > bolbs_before:
             return await ctx.reply(
