@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "bolb-bot"
+version = "0.1.0"
+description = "Why, It's the bolb bot!"
+authors = ["ooliver1 <oliverwilkes2006@icloud.com>", "Sham <thesham@protonmail.com>", "koala9712 <party.mittal@gmail.com>"]
+license = "AGPL3"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+nextcord = "^2.0.0-alpha.1"
+ooliver-botbase = "^1.14.2"
+python-dotenv = "^0.20.0"
+jishaku = "^2.4.0"
+aiosqlite = "^0.17.0"
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
