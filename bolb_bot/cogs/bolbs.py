@@ -24,7 +24,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            amount = row[0] if row else None
+            amount = row[0] if row and row[0] else None
 
         if not amount:
             await ctx.reply("You have no bolbs. Imagine")
@@ -37,20 +37,19 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT daily FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            daily_raw = row[0] if row else 0
-            daily = datetime.fromtimestamp(daily_raw, tz=timezone.utc)
+            daily = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
 
         next_day = daily + timedelta(days=1)
 
         if next_day > utcnow():
             return await ctx.reply(
-                f"You must wait {format_dt(daily, style='R')}. "
+                f"You must wait {format_dt(next_day, style='R')}. "
                 "You have already claimed your daily"
             )
 
         await self.bot.db.execute(
             "UPDATE bolb SET bolbs = bolb.bolbs + 7, daily=? WHERE id=?",
-            (utcnow(), ctx.author.id),
+            (utcnow().isoformat(), ctx.author.id),
         )
         await self.bot.db.commit()
 
@@ -62,21 +61,20 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT weekly FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            weekly_raw = row[0] if row else 0
-            weekly = datetime.fromtimestamp(weekly_raw, tz=timezone.utc)
+            weekly = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
 
         next_week = weekly + timedelta(weeks=1)
 
         if next_week > utcnow():
             await ctx.reply(
-                f"You must wait until {format_dt(weekly, style='R')}. "
+                f"You must wait until {format_dt(next_week, style='R')}. "
                 "You have already claimed your weekly."
             )
             return
 
         await self.bot.db.execute(
-            "UPDATE bolb SET bolbs = bolb.bolbs + 45 weekly = ? WHERE id=?",
-            (utcnow(), ctx.author.id),
+            "UPDATE bolb SET bolbs = bolb.bolbs + 45, weekly=? WHERE id=?",
+            (utcnow().isoformat(), ctx.author.id),
         )
         await self.bot.db.commit()
 
@@ -88,7 +86,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT bolbs FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            bolbs_before = row[0] if row else 0
+            bolbs_before = row[0] if row and row[0] else 0
 
         if amount > bolbs_before:
             return await ctx.reply(
@@ -185,7 +183,7 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             await self.bot.db.execute(
                 "UPDATE bolb SET bolbs = bolbs + ? WHERE id=?", (pay, ctx.author.id)
             )
-        elif le_ods == 1:
+        elif odds == 1:
             # you lose your entire bet if you lose
             await ctx.reply(f"You lost `{funds}` bolbs.")
             await self.bot.db.execute(
