@@ -37,9 +37,9 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT daily FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            daily = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
+            daily = datetime.fromisoformat(row[0]) if row and row[0] else None
 
-        next_day = daily + timedelta(days=1)
+        next_day = daily + timedelta(days=1) if daily else utcnow() - timedelta(days=1)
 
         if next_day > utcnow():
             return await ctx.reply(
@@ -61,9 +61,11 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
             "SELECT weekly FROM bolb WHERE id=?", (ctx.author.id,)
         ) as c:
             row = await c.fetchone()
-            weekly = datetime.fromisoformat(row[0]) if row and row[0] else utcnow()
+            weekly = datetime.fromisoformat(row[0]) if row and row[0] else None
 
-        next_week = weekly + timedelta(weeks=1)
+        next_week = (
+            weekly + timedelta(weeks=1) if weekly else utcnow() - timedelta(days=1)
+        )
 
         if next_week > utcnow():
             await ctx.reply(
