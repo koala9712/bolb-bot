@@ -116,11 +116,10 @@ class Bolb(Cog, name="bolb", description="Mess with some bolbs!"):
 
         users = list(
             await self.bot.db.execute_fetchall(
-                "SELECT id, bolbs FROM bolb ORDER BY bolbs LIMIT 10"
+                "SELECT id, bolbs FROM bolb ORDER BY bolbs DESC LIMIT 10"
             )
         )
 
-        users.reverse()
         user_ids = [row[0] for row in users]
 
         if ctx.author.id in user_ids:
