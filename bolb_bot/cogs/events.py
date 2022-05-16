@@ -11,6 +11,7 @@ from nextcord.ext.commands import (
     Context,
     MissingRequiredArgument,
     TooManyArguments,
+    NotOwner
 )
 from nextcord.utils import utcnow
 from nextcord import Embed, NotFound, Forbidden
@@ -58,6 +59,8 @@ class Events(Cog):
             return
         elif isinstance(error, MissingRequiredArgument):
             await ctx.send("You're missing a required argument.")
+        elif isinstance(error, NotOwner):
+            return
         else:
             embed = Embed(
                 title="Unexpected Error.",
