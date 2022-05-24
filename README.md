@@ -3,7 +3,7 @@
 hi yes this is the shitcode of bolb bot.
 have fun.
 
-written by [koala#9712](https://github.com/koala9712), [Sham#0002](https://github.com/realShamlol) and [ooliver#6969](https://github.com/ooliver1) ofc
+written by [koala#9712](https://github.com/koala9712), [Sham#2412](https://github.com/toolifelesstocode) and [ooliver#6969](https://github.com/ooliver1) ofc
 
 ## Deploying
 
