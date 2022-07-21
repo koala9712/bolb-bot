@@ -40,8 +40,8 @@ class Events(Cog):
             return
 
         await self.bot.db.execute(
-            """INSERT INTO bolb 
-            VALUES (?, ?, ?, ?) 
+            """INSERT INTO bolb
+            VALUES (?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE
                 SET bolbs = bolb.bolbs + 1""",
             (message.author.id, 1, utcnow(), utcnow()),
@@ -68,14 +68,6 @@ class Events(Cog):
                 color=self.bot.color,
             )
             ensure_future(ctx.send(embed=embed))
-            if ctx.guild is None:
-                channel = "dm"
-                name = "dm"
-                guild = "dm"
-            else:
-                channel = ctx.channel.mention  # type: ignore
-                name = ctx.channel.name  # type: ignore
-                guild = ctx.guild.name
 
             tb = "\n".join(format_exception(type(error), error, error.__traceback__))
             log.error(
@@ -85,21 +77,6 @@ class Events(Cog):
                 error,
                 exc_info=True,
             )
-
-            for user_id in self.bot.owner_ids:
-                try:
-                    user = await self.bot.fetch_user(user_id)
-                except NotFound:
-                    continue
-
-                try:
-                    await self.bot.get_wrapped_person(user).send_embed(
-                        desc=f"command {ctx.command} gave ```py\n{tb}```, "
-                        f"invoke: {ctx.message.content} in "
-                        f"{channel} ({name}) in {guild} by {ctx.author}"
-                    )
-                except Forbidden:
-                    log.error("%s has dms closed smh", str(user))
 
     @Cog.listener()
     async def on_ready(self):
